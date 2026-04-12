@@ -1,0 +1,43 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+venv/
+.venv/
+env/
+
+# IDE
+.idea/
+.vscode/
+*.swp
+
+# Jupyter
+.ipynb_checkpoints/
+
+# --- No data / artifacts in Git (regenerate with HDFS/logbert.py process) ---
+output/
+WhiteningNpy/
+data/
+datasets/
+raw/
+
+# ML & tabular dumps (anywhere in repo)
+*.npy
+*.npz
+*.npz.gz
+*.csv
+*.tsv
+*.parquet
+*.h5
+*.hdf5
+*.pkl
+*.pickle
+*.pth
+*.pt
+*.onnx
+*.log
+*.gz
+*.zip
+*.7z
