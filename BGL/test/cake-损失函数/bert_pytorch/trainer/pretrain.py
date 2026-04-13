@@ -27,7 +27,6 @@ class BERTTrainer:
                  lr: float = 1e-4, betas=(0.9, 0.999), weight_decay: float = 0.01, warmup_steps=10000,
                  with_cuda: bool = True, cuda_devices=None, log_freq: int = 10, is_logkey=True, is_time=False,
                  run_weight_alpha: float = 0.3,
-                 run_weighted_cls_loss: bool = True,
                  ):
         """
         :param bert: BERT model which you want to train
@@ -84,7 +83,6 @@ class BERTTrainer:
         self.is_logkey = is_logkey
         self.is_time = is_time
         self.run_weight_alpha = run_weight_alpha  # run 中部的权重（应该 < 1）
-        self.run_weighted_cls_loss = run_weighted_cls_loss
 
     def manual_nll_loss(self, log_probs, target, original_sequence, ignore_index=0, alpha=0.3):
         """
@@ -274,14 +272,13 @@ class BERTTrainer:
 
             cls_lm_output = result["cls_output"]
 
-            if not self.is_logkey:
-                cls_loss = torch.tensor(0)
-            elif self.run_weighted_cls_loss:
-                cls_loss = self.manual_nll_loss(
-                    cls_lm_output.transpose(1, 2), data[2], data[4], ignore_index=0, alpha=self.run_weight_alpha
-                )
-            else:
-                cls_loss = self.cls_criterion(cls_lm_output.transpose(1, 2), data[2])
+            # 使用手动实现的 NLLLoss（支持 run 权重）
+            cls_loss = torch.tensor(0) if not self.is_logkey else self.manual_nll_loss(
+                cls_lm_output.transpose(1, 2), data[2], data[4], ignore_index=0, alpha=self.run_weight_alpha
+            )
+            
+            # 如果想使用 PyTorch 内置的 NLLLoss，可以替换为：
+            # cls_loss = torch.tensor(0) if not self.is_logkey else self.cls_criterion(cls_lm_output.transpose(1, 2), data[2])
             total_cls_loss += cls_loss.item()
             loss = cls_loss
 

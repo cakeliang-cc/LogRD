@@ -64,7 +64,6 @@ class Trainer():
         self.attn_heads = options["attn_heads"]
         self.is_logkey = options["is_logkey"]
         self.is_time = options["is_time"]
-        self.run_weighted_cls_loss = options.get("run_weighted_cls_loss", True)
         self.scale = options["scale"]
         self.scale_path = options["scale_path"]
         self.n_epochs_stop = options["n_epochs_stop"]
@@ -76,7 +75,7 @@ class Trainer():
 
         print("Save options parameters")
         save_parameters(options, self.model_dir + "parameters.txt")
-        logkey_train, logkey_valid, time_train, time_valid = generate_train_valid(self.output_path + "train.csv",
+        logkey_train, logkey_valid, time_train, time_valid = generate_train_valid(self.output_path + "df_train_uni_processed.csv",
                                                                                   window_size=self.window_size,
                                                                                   adaptive_window=self.adaptive_window,
                                                                                   valid_size=self.valid_ratio,
@@ -136,8 +135,7 @@ class Trainer():
                                    lr=self.lr, betas=(self.adam_beta1, self.adam_beta2),
                                    weight_decay=self.adam_weight_decay,
                                    with_cuda=self.with_cuda, cuda_devices=self.cuda_devices, log_freq=self.log_freq,
-                                   is_logkey=self.is_logkey, is_time=self.is_time,
-                                   run_weighted_cls_loss=self.run_weighted_cls_loss,)
+                                   is_logkey=self.is_logkey, is_time=self.is_time,)
         self.start_iteration(surfix_log="log2")
         self.plot_train_valid_loss("_log2")
 
@@ -148,8 +146,16 @@ class Trainer():
         best_loss = float('inf')
         epochs_no_improve = 0
         for epoch in range(self.epochs):
-
+            # 实现动态掩码的功能
+            train_dataset = LogDataset(self.vocab, self.logkey_train, self.time_train, self.embedding_arr, seq_len=self.seq_len,
+                                       corpus_lines=self.corpus_lines, on_memory=self.on_memory,
+                                       mask_ratio=self.mask_ratio)
+            self.train_data_loader = DataLoader(train_dataset, batch_size=self.batch_size, num_workers=self.num_workers,
+                                                drop_last=True)
             self.trainer.train_data = self.train_data_loader
+            valid_dataset = LogDataset(self.vocab, self.logkey_valid, self.time_valid, self.embedding_arr, seq_len=self.seq_len, on_memory=self.on_memory,
+                                   mask_ratio=self.mask_ratio)
+            self.valid_data_loader = DataLoader(valid_dataset, batch_size=self.batch_size, num_workers=self.num_workers, drop_last=True)
             self.trainer.valid_data = self.valid_data_loader
             print("\n")
 

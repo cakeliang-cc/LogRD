@@ -16,7 +16,7 @@ env/
 # Jupyter
 .ipynb_checkpoints/
 
-# --- No data / artifacts in Git (regenerate with HDFS/logbert.py process) ---
+# --- No data / artifacts in Git (regenerate: python HDFS/logbert.py process) ---
 output/
 WhiteningNpy/
 data/
